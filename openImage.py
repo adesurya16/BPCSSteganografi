@@ -1,6 +1,6 @@
 from PIL import Image
 
-img = Image.open('C:/Users/mnaufal75/foto.png')
+img = Image.open('C:/Users/mnaufal75/foto.bmp')
 rgb_img = img.convert('RGB')
 # pix = img.load()
 
@@ -59,5 +59,3 @@ newImg.show()
 # image.save('image.png')
 # newImg.show()
 # img.show()
-r, g, b = rgb_img.split()
-r.show()
