@@ -52,6 +52,14 @@ def stringToMatrix(ls, width=8, height=8):
     return y
 
 
+def matrixToString(mx, width=8, height=8):
+    strs = ''
+    for i in range(0, width):
+        for j in range(0, height):
+            strs += mx[i][j]
+    return ''.join(strs)
+
+
 # bitPlane 24x24 , width=8, height=8
 # list of 24 complexity
 def calculateBMComplexity(bitPlane, width=8, height=8):
@@ -59,26 +67,102 @@ def calculateBMComplexity(bitPlane, width=8, height=8):
     for plane in bitPlane:
         comp = 0
         pl = stringToMatrix(plane)
-        print(pl)
-        for i in range(0, 8):
-            for j in range(0, 8):
-                if j < 7:
+        for i in range(0, width):
+            for j in range(0, height):
+                if j < width - 1:
                     if (pl[i][j] != pl[i][j + 1]):
                         comp += 1
-                if i < 7:
+                if i < height - 1:
                     if (pl[i][j] != pl[i + 1][j]):
                         comp += 1
-                print(i, j, comp)
-        # for i in range(0, len(plane)):
-            # if (i + 1) < len(plane):
-            #     if (i + 1) % width > 0 and plane[i + 1] != plane[i]:
-            #         comp += 1
-            # if (i + 8) < len(plane):
-            #     if plane[i + 8] != plane[i]:
-            #         comp += 1
-            # print(i, comp)
         listComp.append(comp / (width * (height - 1) + height * (width - 1)))
     return listComp
+
+
+def calculateMessageComplexity(msg, width=8, height=8):
+    comp = 0
+    message = stringToMatrix(msg)
+    for i in range(0, width):
+        for j in range(0, height):
+            if j < width - 1:
+                if (message[i][j] != message[i][j + 1]):
+                    comp += 1
+            if i < height - 1:
+                if (message[i][j] != message[i + 1][j]):
+                    comp += 1
+    return comp
+
+
+def generateWC(width=8, height=8):
+    wc = []
+    for i in range(0, width):
+        wc.append([''])
+        for j in range(0, height):
+            if (i + j) % 2 == 0:
+                wc[i] += '0'
+            else:
+                wc[i] += '1'
+    return wc
+
+
+def generateBC(width=8, height=8):
+    bc = []
+    for i in range(0, width):
+        bc.append([''])
+        for j in range(0, height):
+            if (i + j) % 2 == 0:
+                bc[i] += '1'
+            else:
+                bc[i] += '0'
+    return bc
+
+
+def conjugateBitPlane(bitPlane, width=8, height=8):
+    str1 = stringToMatrix(bitPlane)
+    wc8 = generateWC()
+    for i in range(0, width):
+        for j in range(0, height):
+            # xor
+            if str1[i][j] == wc8[i][j]:
+                str1[i][j] = '0'
+            else:
+                str1[i][j] = '1'
+    return str1
+
+
+def isPossible(bitPlane, image, plaintext):
+    listComp = calculateBMComplexity(bitPlane)
+    w, h = image.size
+    for i in listComp:
+        None
+
+
+def PBCtoCGC(bitPlane, width=8, height=8):
+    bp = stringToMatrix(bitPlane, width, width)
+    for i in range(0, width):
+        for j in range(0, height):
+            tmp = bp[i][j]
+            if i > 0:
+                # xor
+                if tmp == bp[i][j - 1]:
+                    bp[i][j] = '0'
+                else:
+                    bp[i][j] = '1'
+    return matrixToString(bp)
+
+
+def CGCtoPBC(bitPlane, width=8, height=8):
+    bp = stringToMatrix(bitPlane, width, width)
+    for i in range(0, width):
+        for j in range(0, height):
+            tmp = bp[i][j]
+            if i > 0:
+                # xor
+                if tmp == bp[i][j - 1]:
+                    bp[i][j] = '0'
+                else:
+                    bp[i][j] = '1'
+    return matrixToString(bp)
 
 
 img = Image.open('C:/Users/mnaufal75/foto.png')
@@ -94,6 +178,7 @@ cropImage = cropBlock(rgb_img, 200, 200)
 #         # print(bitPlane)
 #         break
 #     break
-lists = ['1010101010101010101010101010101010101010101010101010101010101010']
-print(calculateBMComplexity(lists))
+# lists = ['1010101001010101101010100101010110101010010101011010101001010101']
+# print(calculateBMComplexity(lists))
 # print(crop)
+print(matrixToString(['123', '234', '123'], 3, 3))
