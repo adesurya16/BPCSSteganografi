@@ -1,8 +1,25 @@
 from PIL import Image
 
+
+cropList = []
+
+
+def crop(input, height, width):
+    # im = Image.open(input)
+    for i in range(0, imgheight, height):
+        for j in range(0, imgwidth, width):
+            box = (j, i, j + width, i + height)
+            a = img.crop(box)
+            # a.show()
+            cropList[i].append(a)
+
+
 img = Image.open('C:/Users/mnaufal75/foto.bmp')
 rgb_img = img.convert('RGB')
 # pix = img.load()
+
+imgwidth, imgheight = img.size
+crop(rgb_img, 8, 8)
 
 x = []
 
@@ -14,21 +31,17 @@ for i in range(0, width):
     for j in range(0, height):
         r, g, b = rgb_img.getpixel((i, j))
 
-        # rBinary = '{0:08b}'.format(r)
         rBinary = format(r, '08b')
         for k in range(0, 8):
             x[k] += rBinary[k]
 
-        # gBinary = '{0:08b}'.format(g)
         gBinary = format(g, '08b')
         for k in range(0, 8):
             x[k + 8] += gBinary[k]
 
         bBinary = format(b, '08b')
-        # bBinary = '{0:08b}'.format(b)
         for k in range(0, 8):
             x[k + 16] += bBinary[k]
-        # pix[i, j] = (0, 0, 0)
 
 baca = int(input("Tampilkan plane ke berapa? "))
 
@@ -39,23 +52,5 @@ newImg = Image.new('1', (width, height))
 for i in range(0, width):
     for j in range(0, height):
         newImg.putpixel((i, j), int(y[i][j]))
-        # newImg[i, j] = y[ij]
-newImg.show()
-# print(x[0])
-# newImg = Image.frombytes('1', (width, height), b'x[0]')
+
 # newImg.show()
-# for i in range(0, width):
-#     for j in range(0, height):
-#         newImg.putpixel((i, j), 0)
-
-# image = Image.open(io.BytesIO(b'x[0]'))
-# image.show()
-
-# stream = io.BytesIO(b'x[0]')
-# print(stream)
-
-# image = Image.open(x[0])
-# draw = ImageDraw.Draw(image)
-# image.save('image.png')
-# newImg.show()
-# img.show()
