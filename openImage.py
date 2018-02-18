@@ -1,34 +1,34 @@
 from PIL import Image
 
 
-cropList = []
+def crop(width, height):
+    blocklist = []
+    for i in range(0, imgwidth, width):
+        templist = []
+        blocklist.append(templist)
+
+    for i in range(0, imgwidth, width):
+        for j in range(0, imgheight, height):
+            box = (i, j, i + height, j + width)
+            blocklist[int(i / width)].append(img.crop(box))
 
 
-def crop(input, height, width):
-    # im = Image.open(input)
-    for i in range(0, imgheight, height):
-        for j in range(0, imgwidth, width):
-            box = (j, i, j + width, i + height)
-            a = img.crop(box)
-            # a.show()
-            cropList[i].append(a)
-
-
-img = Image.open('C:/Users/mnaufal75/foto.bmp')
+img = Image.open('C:/Users/mnaufal75/foto.png')
 rgb_img = img.convert('RGB')
 # pix = img.load()
 
 imgwidth, imgheight = img.size
-crop(rgb_img, 8, 8)
+crop(40, 40)
 
 x = []
 
 for i in range(0, 24):
     x.append('')
 
-width, height = img.size
-for i in range(0, width):
-    for j in range(0, height):
+print(imgwidth, imgheight)
+
+for i in range(0, imgwidth):
+    for j in range(0, imgheight):
         r, g, b = rgb_img.getpixel((i, j))
 
         rBinary = format(r, '08b')
@@ -46,11 +46,11 @@ for i in range(0, width):
 baca = int(input("Tampilkan plane ke berapa? "))
 
 k = x[baca]
-y = [k[i:i + height] for i in range(0, len(k), height)]
+y = [k[i:i + imgheight] for i in range(0, len(k), imgheight)]
 
-newImg = Image.new('1', (width, height))
-for i in range(0, width):
-    for j in range(0, height):
+newImg = Image.new('1', (imgwidth, imgheight))
+for i in range(0, imgwidth):
+    for j in range(0, imgheight):
         newImg.putpixel((i, j), int(y[i][j]))
 
 # newImg.show()
