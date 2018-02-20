@@ -2,7 +2,6 @@ from PIL import Image
 
 THRESHOLD = 0.3
 
-
 def cropBlock(input, height=8, width=8):
     # im = Image.open(input)
     cropList = []
@@ -130,11 +129,20 @@ def conjugateBitPlane(bitPlane, width=8, height=8):
     return str1
 
 
-def isPossible(bitPlane, image, plaintext):
-    listComp = calculateBMComplexity(bitPlane)
+def isPossible(ListAllComplexity, image, plaintext):
     w, h = image.size
-    for i in listComp:
-        None
+    sizeLength = str(len(plaintext))
+    sizeMessage = len(plaintext) / 8
+    if len(plaintext) % 8 > 0:
+        sizeMessage += 1
+    sizeMap = sizeMessage / 8
+    if sizeMessage % 8 > 0:
+        sizeMap += 1
+    count = 0
+    for i in ListAllComplexity:
+        if i > THRESHOLD:
+            count += 1
+    return count > (sizeLength + sizeMap + sizeMessage)
 
 
 def PBCtoCGC(bitPlane, width=8, height=8):
@@ -165,20 +173,20 @@ def CGCtoPBC(bitPlane, width=8, height=8):
     return matrixToString(bp)
 
 
-img = Image.open('C:/Users/mnaufal75/foto.png')
+img = Image.open('morata.png')
 rgb_img = img.convert('RGB')
 # pix = img.load()
 
-cropImage = cropBlock(rgb_img, 200, 200)
+cropImage = cropBlock(rgb_img, 8, 8)
+print(cropImage)
 
-
-# for iImage in cropImage:
-#     for jImage in iImage:
-#         bitPlane = convertToBitplane(jImage, 200, 200)
-#         # print(bitPlane)
-#         break
-#     break
+ListBitPlane = []
+for iImage in cropImage:
+    for jImage in iImage:
+        bitPlane = convertToBitplane(jImage, 8, 8)
+        ListBitPlane.extend(bitPlane)
+# print(ListBitPlane)
 # lists = ['1010101001010101101010100101010110101010010101011010101001010101']
 # print(calculateBMComplexity(lists))
 # print(crop)
-print(matrixToString(['123', '234', '123'], 3, 3))
+# print(matrixToString(['123', '234', '123'], 3, 3))

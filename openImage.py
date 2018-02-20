@@ -13,7 +13,7 @@ def crop(width, height):
             blocklist[int(i / width)].append(img.crop(box))
 
 
-img = Image.open('C:/Users/mnaufal75/foto.png')
+img = Image.open('resource/morata.png')
 rgb_img = img.convert('RGB')
 # pix = img.load()
 
@@ -53,4 +53,4 @@ for i in range(0, imgwidth):
     for j in range(0, imgheight):
         newImg.putpixel((i, j), int(y[i][j]))
 
-# newImg.show()
+newImg.show()
