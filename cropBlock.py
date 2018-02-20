@@ -221,6 +221,15 @@ def generatorMessage(msg):
     return msgBlock
 
 
+def a(str_, width=8, height=8):
+    y = [str_[i:i + height] for i in range(0, len(str_), height)]
+    newImg = Image.new('1', (width, height))
+    for i in range(0, width):
+        for j in range(0, height):
+            newImg.putpixel((i, j), int(y[i][j]))
+    return newImg
+
+
 def encryptMessage(inputFile, messageFile, key, outputFile):
     img = Image.open(inputFile)
     rgb_img = img.convert('RGB')
@@ -239,16 +248,27 @@ def encryptMessage(inputFile, messageFile, key, outputFile):
     g = generatorMessage(msg)
     cropImage = cropBlock(rgb_img, 8, 8)
 
-    for i in cropImage:
-        for j in i:
-            bitplane = convertToBitplane(j, 8, 8)
+    for i in range(0, len(cropImage)):
+        for j in range(0, len(cropImage[i])):
+            bitplane = convertToBitplane(cropImage[i][j], 8, 8)
             complexity = calculateBMComplexity(bitplane, 8, 8)
             for k, c in enumerate(complexity):
                 if float(c) >= THRESHOLD and g:
-                    print(g)
+                    # print(g)
                     bitplane[k] = ''.join(g[0])
                     g.pop(0)
-                    # showImage(bitplane[0], 8, 8)
+            gambar = zip(*bitplane)
+            x = list(gambar)
+            # print(x[1])
+            newImg = Image.new('RGB', (width, height))
+            for k in range(0, 64):
+                pixel = ''.join(x[k])
+                red, green, blue = int(pixel[0:8], 2), int(pixel[8:16], 2), int(pixel[16:24], 2)
+                xPixel = k // 8
+                yPixel = k % 8
+                newImg.putpixel((xPixel, yPixel), (red, green, blue))
+                # print(red, green, blue)
+                cropImage[i][j] = newImg
 
     print(width, height)
     newImg = Image.new('RGB', (width, height))
