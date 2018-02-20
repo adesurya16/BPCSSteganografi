@@ -227,7 +227,6 @@ def encryptMessage(inputFile, messageFile, key, outputFile):
 
     g = generatorMessage(msg)
     cropImage = cropBlock(rgb_img, 8, 8)
-    cropImage[40][40].show()
 
     for i in cropImage:
         for j in i:
@@ -241,7 +240,6 @@ def encryptMessage(inputFile, messageFile, key, outputFile):
                     # showImage(bitplane[0], 8, 8)
 
     print(width, height)
-    cropImage[40][40].show()
     newImg = Image.new('RGB', (width, height))
     y_offset = 0
     for i in cropImage:
