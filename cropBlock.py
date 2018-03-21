@@ -1,20 +1,24 @@
 from PIL import Image
+import sys
+import getopt
 
 THRESHOLD = 0.3
+
 
 def cropBlock(input, height=8, width=8):
     # im = Image.open(input)
     cropList = []
-    imgwidth, imgheight = img.size
-    for i in range(0, imgheight, height):
+    width, height = input.size
+    imgheight, imgwidth = 8, 8
+    for i in range(0, height, imgheight):
         cropList.append([])
 
-    for i in range(0, imgheight, height):
-        for j in range(0, imgwidth, width):
-            box = (j, i, j + width, i + height)
-            a = img.crop(box)
+    for i in range(0, height, imgheight):
+        for j in range(0, width, imgwidth):
+            box = (j, i, j + imgwidth, i + imgheight)
+            a = input.crop(box)
             # a.show()
-            cropList[int(i / height)].append(a)
+            cropList[int(i / imgheight)].append(a)
 
     return cropList
 
@@ -80,7 +84,7 @@ def calculateBMComplexity(bitPlane, width=8, height=8):
 
 def calculateMessageComplexity(msg, width=8, height=8):
     comp = 0
-    message = stringToMatrix(msg)
+    message = msg
     for i in range(0, width):
         for j in range(0, height):
             if j < width - 1:
@@ -95,24 +99,28 @@ def calculateMessageComplexity(msg, width=8, height=8):
 def generateWC(width=8, height=8):
     wc = []
     for i in range(0, width):
-        wc.append([''])
+        wc.append([])
+    for i in range(0, width):
         for j in range(0, height):
             if (i + j) % 2 == 0:
-                wc[i] += '0'
+                wc[i].append('0')
             else:
-                wc[i] += '1'
+                wc[i].append('1')
+        wc[i] = ''.join(wc[i])
     return wc
 
 
 def generateBC(width=8, height=8):
     bc = []
     for i in range(0, width):
-        bc.append([''])
+        bc.append([])
+    for i in range(0, width):
         for j in range(0, height):
             if (i + j) % 2 == 0:
-                bc[i] += '1'
+                bc[i].append('0')
             else:
-                bc[i] += '0'
+                bc[i].append('1')
+        bc[i] = ''.join(bc[i])
     return bc
 
 
@@ -130,6 +138,23 @@ def conjugateBitPlane(plane, width=8, height=8):
     return matrixToString(str1)
 
 
+def conjugateMessage(msg, width=8, height=8):
+    str_ = msg
+    wc8 = generateWC()
+    for i in range(0, width):
+        ls = list(str_[i])
+        for j in range(0, height):
+            # xor
+            if ls[j] == wc8[i][j]:
+                ls[j] = '0'
+            else:
+                ls[j] = '1'
+        str_[i] = ''.join(ls)
+    return str_
+
+
+# def isPossible(bitPlane, image, plaintext):
+    # listComp = calculateBMComplexity(bitPlane)
 def isPossible(ListAllComplexity, image, plaintext):
     w, h = image.size
     sizeLength = str(len(plaintext))
@@ -205,10 +230,10 @@ def seqBPCS(ListBitPlane, msg, listComp):
 def seedBPCS(ListBitPlane, msg, seed, listComp): 
 
 
-img = Image.open('morata.png')
-rgb_img = img.convert('RGB')
-# pix = img.load()
+def showImage(k, width=8, height=8):
+    y = [k[i:i + height] for i in range(0, len(k), height)]
 
+<<<<<<< HEAD
 cropImage = cropBlock(rgb_img, 8, 8)
 print(cropImage)
 
@@ -221,6 +246,142 @@ for iImage in cropImage:
 # msg = input("pesan : ")
 
 
+=======
+    newImg = Image.new('1', (width, height))
+    for i in range(0, width):
+        for j in range(0, height):
+            newImg.putpixel((i, j), int(y[i][j]))
+    newImg.show()
+
+
+def generatorMessage(msg):
+    msgBlock = []
+    for i in range(0, len(msg), 8):
+        x = msg[i:i + 8]
+        # or j in range(0, 8, 8):
+        strs = ['{0:08b}'.format(ord(c)) for c in x]
+        if calculateMessageComplexity(strs, 8, 8) < THRESHOLD:
+            strs = conjugateMessage(strs, 8, 8)
+        msgBlock.append(strs)
+    # yield strs
+    return msgBlock
+
+
+def a(str_, width=8, height=8):
+    y = [str_[i:i + height] for i in range(0, len(str_), height)]
+    newImg = Image.new('1', (width, height))
+    for i in range(0, width):
+        for j in range(0, height):
+            newImg.putpixel((i, j), int(y[i][j]))
+    return newImg
+
+
+def encryptMessage(inputFile, messageFile, key, outputFile):
+    img = Image.open(inputFile)
+    rgb_img = img.convert('RGB')
+    width, height = img.size
+
+    msg = ''
+    panjangMessage = 0
+    with open(messageFile) as f:
+        while True:
+            c = f.read(1)
+            panjangMessage += 1
+            msg += c
+            if not c:
+                break
+
+    g = generatorMessage(msg)
+    cropImage = cropBlock(rgb_img, 8, 8)
+
+    for i in range(0, len(cropImage)):
+        for j in range(0, len(cropImage[i])):
+            bitplane = convertToBitplane(cropImage[i][j], 8, 8)
+            complexity = calculateBMComplexity(bitplane, 8, 8)
+            for k, c in enumerate(complexity):
+                if float(c) >= THRESHOLD and g:
+                    # print(g)
+                    bitplane[k] = ''.join(g[0])
+                    g.pop(0)
+            gambar = zip(*bitplane)
+            x = list(gambar)
+            # print(x[1])
+            newImg = Image.new('RGB', (width, height))
+            for k in range(0, 64):
+                pixel = ''.join(x[k])
+                red, green, blue = int(pixel[0:8], 2), int(pixel[8:16], 2), int(pixel[16:24], 2)
+                xPixel = k // 8
+                yPixel = k % 8
+                newImg.putpixel((xPixel, yPixel), (red, green, blue))
+                # print(red, green, blue)
+                cropImage[i][j] = newImg
+
+    print(width, height)
+    newImg = Image.new('RGB', (width, height))
+    y_offset = 0
+    for i in cropImage:
+        x_offset = 0
+        for j in i:
+            newImg.paste(j, (x_offset, y_offset))
+            x_offset += 8
+        y_offset += 8
+    newImg.save(outputFile)
+    # y = [k[i:i + height] for i in range(0, len(k), height)]
+    # newImg = Image.new('1', (width, height))
+    # for i in range(0, width):
+    #     for j in range(0, height):
+    #         newImg.putpixel((i, j), int(y[i][j]))
+    # newImg.show()
+
+
+def decryptMessage(inputFile, key, outputFile):
+    img = Image.open(inputFile)
+    rgb_img = img.convert('RGB')
+
+
+def mainProgram():
+    inputFile, outputFile, messageFile, key = '', '', '', ''
+    encrypt = False
+    decrypt = False
+    myopts, args = getopt.getopt(sys.argv[1:], "edi:o:m:k:")
+
+    for i, j in myopts:
+        if i == '-e':
+            encrypt = True
+        elif i == '-d':
+            decrypt = True
+        elif i == '-i':
+            inputFile = j
+        elif i == '-o':
+            outputFile = j
+        elif i == '-m':
+            messageFile = j
+        elif i == '-k':
+            key = j
+        else:
+            print("Usage: %s -i input -o output" % sys.argv[0])
+
+    if (encrypt):
+        encryptMessage(inputFile, messageFile, key, outputFile)
+    elif (decrypt):
+        decryptMessage(inputFile, messageFile, key, outputFile)
+
+
+mainProgram()
+
+# img = Image.open('morata.png')
+# rgb_img = img.convert('RGB')
+# # pix = img.load()
+
+# cropImage = cropBlock(rgb_img, 8, 8)
+# print(cropImage)
+
+# ListBitPlane = []
+# for iImage in cropImage:
+#     for jImage in iImage:
+#         bitPlane = convertToBitplane(jImage, 8, 8)
+#         ListBitPlane.extend(bitPlane)
+>>>>>>> fa21aa19dbc14bc73d348c24a0b9f01d35f96d69
 # print(ListBitPlane)
 # lists = ['1010101001010101101010100101010110101010010101011010101001010101']
 # print(calculateBMComplexity(lists))
