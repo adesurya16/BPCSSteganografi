@@ -124,8 +124,8 @@ def generateBC(width=8, height=8):
     return bc
 
 
-def conjugateBitPlane(bitPlane, width=8, height=8):
-    str1 = stringToMatrix(bitPlane)
+def conjugateBitPlane(plane, width=8, height=8):
+    str1 = stringToMatrix(plane)
     wc8 = generateWC()
     for i in range(0, width):
         for j in range(0, height):
@@ -134,7 +134,8 @@ def conjugateBitPlane(bitPlane, width=8, height=8):
                 str1[i][j] = '0'
             else:
                 str1[i][j] = '1'
-    return str1
+    
+    return matrixToString(str1)
 
 
 def conjugateMessage(msg, width=8, height=8):
@@ -214,10 +215,55 @@ def CGCtoPBC(bitPlane, width=8, height=8):
                     bp[i][j] = '1'
     return matrixToString(bp)
 
+def addDummyMsg(msg,numberMod):
+    while msg % numberMod > 0:
+        msg += " "
+    return msg
+
+# validation pass
+def seqBPCS(ListBitPlane, msg, listComp):
+    i = 0
+    newListBitPlane = []
+    msg = addDummyMsg(msg)
+    startMsg = 0
+    for Bitplane in ListBitPlane:
+        newBitPlane = []
+        for plane in Bitplane:
+            if listComp[i] > THRESHOLD and startMsg < len(msg): 
+                newPlane = []
+                for char in msg[startMsg:startMsg+8]:
+                    newPlane.append(format(char, '08b'))
+                if calculateMessageComplexity(msg[startMsg:startMsg+8]) > THRESHOLD:
+                    newBitPlane.append(newPlane)
+                else:
+                    newBitPlane.append(conjugateBitPlane(newPlane))                    
+                startMsg += 8
+            else:
+                newBitPlane.append(plane)
+            i+=1
+        newListBitPlane.append(newBitPlane)
+    return newListBitPlane
+    
+def seedBPCS(ListBitPlane, msg, seed, listComp): 
+
 
 def showImage(k, width=8, height=8):
     y = [k[i:i + height] for i in range(0, len(k), height)]
 
+<<<<<<< HEAD
+cropImage = cropBlock(rgb_img, 8, 8)
+print(cropImage)
+
+ListBitPlane = []
+for iImage in cropImage:
+    for jImage in iImage:
+        bitPlane = convertToBitplane(jImage, 8, 8)
+        ListBitPlane.extend(bitPlane)
+
+# msg = input("pesan : ")
+
+
+=======
     newImg = Image.new('1', (width, height))
     for i in range(0, width):
         for j in range(0, height):
@@ -403,6 +449,7 @@ mainProgram()
 #     for jImage in iImage:
 #         bitPlane = convertToBitplane(jImage, 8, 8)
 #         ListBitPlane.extend(bitPlane)
+>>>>>>> fa21aa19dbc14bc73d348c24a0b9f01d35f96d69
 # print(ListBitPlane)
 # lists = ['1010101001010101101010100101010110101010010101011010101001010101']
 # print(calculateBMComplexity(lists))
