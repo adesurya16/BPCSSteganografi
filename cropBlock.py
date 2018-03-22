@@ -2,7 +2,7 @@ from PIL import Image
 import sys
 import getopt
 
-THRESHOLD = 0.3
+THRESHOLD = 0.5
 
 
 def cropBlock(input, height=8, width=8):
@@ -78,7 +78,7 @@ def calculateBMComplexity(bitPlane, width=8, height=8):
                 if i < height - 1:
                     if (pl[i][j] != pl[i + 1][j]):
                         comp += 1
-        listComp.append(comp / (width * (height - 1) + height * (width - 1)))
+        listComp.append(float(comp / (width * (height - 1) + height * (width - 1))))
     return listComp
 
 
@@ -154,20 +154,37 @@ def conjugateMessage(msg, width=8, height=8):
 
 # def isPossible(bitPlane, image, plaintext):
     # listComp = calculateBMComplexity(bitPlane)
-def isPossible(ListAllComplexity, image, plaintext):
+def isPossibleAndGenerateMap(cropImage, image, plaintext):
+    ListAllComplexity = []
+    mapConjugation = ''
+    for i in range(0, len(cropImage)):
+        for j in range(0, len(cropImage[i])):
+            bitplane = convertToBitplane(cropImage[i][j], 8, 8)
+            complexity = calculateBMComplexity(bitplane, 8, 8)
+            ListAllComplexity.extend(complexity)
     w, h = image.size
-    sizeLength = str(len(plaintext))
-    sizeMessage = len(plaintext) / 8
-    if len(plaintext) % 8 > 0:
+    sizeMessage = len(plaintext) // 64
+    if len(plaintext) % 64 > 0:
         sizeMessage += 1
-    sizeMap = sizeMessage / 8
-    if sizeMessage % 8 > 0:
-        sizeMap += 1
     count = 0
+    lmapCon = -1
     for i in ListAllComplexity:
-        if i > THRESHOLD:
+        if i >= THRESHOLD:
+            mapConjugation += '1'
             count += 1
-    return count > (sizeLength + sizeMap + sizeMessage)
+        else:
+            mapConjugation += '0'
+        if count == sizeMessage:
+            lmapCon = len(mapConjugation) // 64
+            if len(mapConjugation) % 64 > 0:
+                lmapCon += 1
+
+    # tambahin map konjugasi dan panjang pesan (asumsi muat 1 bitplane)
+    if count > sizeMessage:
+        valid = True
+    else:
+        valid = False
+    return (valid, mapConjugation)
 
 
 def PBCtoCGC(bitPlane, width=8, height=8):
@@ -214,8 +231,8 @@ def generatorMessage(msg):
         x = msg[i:i + 8]
         # or j in range(0, 8, 8):
         strs = ['{0:08b}'.format(ord(c)) for c in x]
-        if calculateMessageComplexity(strs, 8, 8) < THRESHOLD:
-            strs = conjugateMessage(strs, 8, 8)
+        # if calculateMessageComplexity(strs, 8, 8) < THRESHOLD:
+        #     strs = conjugateMessage(strs, 8, 8)
         msgBlock.append(strs)
     # yield strs
     return msgBlock
@@ -244,42 +261,68 @@ def encryptMessage(inputFile, messageFile, key, outputFile):
             msg += c
             if not c:
                 break
-
+    print(msg)           
     g = generatorMessage(msg)
     cropImage = cropBlock(rgb_img, 8, 8)
 
-    for i in range(0, len(cropImage)):
-        for j in range(0, len(cropImage[i])):
-            bitplane = convertToBitplane(cropImage[i][j], 8, 8)
-            complexity = calculateBMComplexity(bitplane, 8, 8)
-            for k, c in enumerate(complexity):
-                if float(c) >= THRESHOLD and g:
-                    # print(g)
-                    bitplane[k] = ''.join(g[0])
-                    g.pop(0)
-            gambar = zip(*bitplane)
-            x = list(gambar)
-            # print(x[1])
-            newImg = Image.new('RGB', (width, height))
-            for k in range(0, 64):
-                pixel = ''.join(x[k])
-                red, green, blue = int(pixel[0:8], 2), int(pixel[8:16], 2), int(pixel[16:24], 2)
-                xPixel = k // 8
-                yPixel = k % 8
-                newImg.putpixel((xPixel, yPixel), (red, green, blue))
-                # print(red, green, blue)
-                cropImage[i][j] = newImg
+    # TODO: hitung payload capacity
 
-    print(width, height)
-    newImg = Image.new('RGB', (width, height))
-    y_offset = 0
-    for i in cropImage:
-        x_offset = 0
-        for j in i:
-            newImg.paste(j, (x_offset, y_offset))
-            x_offset += 8
-        y_offset += 8
-    newImg.save(outputFile)
+    # TODO: prepare 1 bitplane for message length
+    threshold, mapConjugation = isPossibleAndGenerateMap(cropImage, img, msg)
+    if len(mapConjugation) % 64 > 0 :
+        while len(mapConjugation) % 64 > 0:
+            mapConjugation+="0"
+    # TODO: prepare bitplanes for map
+    if threshold:
+        # print("masuk")
+        for i in range(0, len(cropImage)):
+            for j in range(0, len(cropImage[i])):
+                bitplane = convertToBitplane(cropImage[i][j], 8, 8)
+                complexity = calculateBMComplexity(bitplane, 8, 8)
+                for k, c in enumerate(complexity):
+                    if i == 0 and j == 0 and k == 0:
+                        panjangString = "{:064b}".format(panjangMessage)
+                        bitplane[k] = panjangString
+                        # mapConjugation.append(0)
+                    elif i == 0 and j == 0 and ((k == 1) or (k == 2)):
+                        bitplane[k] = mapConjugation[0:64]
+                        mapConjugation = mapConjugation[64:]
+                    elif c >= THRESHOLD and g:
+                        #print(k)
+                        #print(bitplane[k])
+                        print(g)
+                        bitplane[k] = ''.join(g[0])
+                        print(bitplane[k])
+                        print(i, j, k)
+                        g.pop(0)
+                    elif not g:
+                        break
+
+                gambar = zip(*bitplane)
+                x = list(gambar)
+                # print(x[1])
+                newImg = Image.new('RGB', (width, height))
+                for k in range(0, 64):
+                    pixel = ''.join(x[k])
+                    red, green, blue = int(pixel[0:8], 2), int(pixel[8:16], 2), int(pixel[16:24], 2)
+                    xPixel = k // 8
+                    yPixel = k % 8
+                    newImg.putpixel((xPixel, yPixel), (red, green, blue))
+                    # print(red, green, blue)
+                    cropImage[i][j] = newImg
+
+        print(width, height)
+        newImg = Image.new('RGB', (width, height))
+        y_offset = 0
+        for i in cropImage:
+            x_offset = 0
+            for j in i:
+                newImg.paste(j, (x_offset, y_offset))
+                x_offset += 8
+            y_offset += 8
+        newImg.save(outputFile)
+    else:
+        print("not enough memory image")
     # y = [k[i:i + height] for i in range(0, len(k), height)]
     # newImg = Image.new('1', (width, height))
     # for i in range(0, width):
@@ -291,7 +334,32 @@ def encryptMessage(inputFile, messageFile, key, outputFile):
 def decryptMessage(inputFile, key, outputFile):
     img = Image.open(inputFile)
     rgb_img = img.convert('RGB')
-
+    width, height = img.size
+    cropImage = cropBlock(rgb_img, 8, 8)
+    mapConjugation = ''
+    ans = ''
+    klen = 3
+    for i in range(0, len(cropImage)):
+            for j in range(0, len(cropImage[i])):
+                bitplane = convertToBitplane(cropImage[i][j], 8, 8)
+                for k in range(0,len(bitplane)):
+                    if i == 0 and j == 0 and k == 0:
+                        panjangMap = int(bitplane[k], 2) -1 
+                        print(panjangMap)
+                    elif i == 0 and j == 0 and ((k == 1) or (k == 2)):   
+                        # print(bitplane[k])
+                        mapConjugation += bitplane[k]
+                        print(mapConjugation)
+                    elif klen < len(mapConjugation):
+                        if mapConjugation[klen] == '1':
+                            # print(bitplane[k])
+                            for l in range(0, 64, 8):
+                                ans += chr(int(bitplane[k][l:l + 8], 2))
+                                # print(i, j, k, chr(int(bitplane[k][l:l + 8], 2)))
+                        klen += 1
+                    elif klen >= len(mapConjugation):
+                        break
+    print(ans[0:panjangMap])
 
 def mainProgram():
     inputFile, outputFile, messageFile, key = '', '', '', ''
@@ -318,7 +386,7 @@ def mainProgram():
     if (encrypt):
         encryptMessage(inputFile, messageFile, key, outputFile)
     elif (decrypt):
-        decryptMessage(inputFile, messageFile, key, outputFile)
+        decryptMessage(inputFile, messageFile, key)
 
 
 mainProgram()
